@@ -32,7 +32,7 @@ Settings
 | Pyramid setting | Default | Effect |
 |-----------------|--------|---------|
 | `pyramid_sanity.disable_all` | `False` | Disable all features, so they can be selectively enabled
-| `pyramid_sanity.check_form` | `True` | Check for encoding errors in POST form fields
+| `pyramid_sanity.check_form` | `True` | Check for badly declared forms
 | `pyramid_sanity.check_params` | `True` | Check for encoding errors in URL parameters
 | `pyramid_sanity.check_path` | `True` | Check for encoding errors in the URL path
 | `pyramid_sanity.ascii_safe_redirects` | `True` | Ensure redirects do not include raw unicode characters
@@ -62,13 +62,13 @@ The code that ended up here was all initially based on:
 
  * https://github.com/pypa/warehouse/blob/master/warehouse/sanity.py
  
+From the excellent PyPI [Warehouse](https://github.com/pypa/warehouse/blob/master/README.rst) project. 
+ 
 The major modifications to this are around the ergonomics:
 
  * Different errors to allow fine grained handling if you want
  * Configurable checkers and fixers
  * Packaging as a separate package etc.
- 
-From the excellent PyPI [Warehouse](https://github.com/pypa/warehouse/blob/master/README.rst) project. 
 
 Hacking
 -------
