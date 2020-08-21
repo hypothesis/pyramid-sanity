@@ -85,17 +85,32 @@ class TestIngressTweenFactory:
 
 
 class TestChecks:
+    def test_check_invalid_query_string_ok(self):
+        IngressTweenFactory.check_invalid_query_string(Request.blank("/?a=1"))
+
     def test_check_invalid_query_string(self):
         request = Request.blank("/?f%FC=123")
 
         with pytest.raises(InvalidQueryString):
             IngressTweenFactory.check_invalid_query_string(request)
 
+    def test_check_invalid_path_info_ok(self):
+        IngressTweenFactory.check_invalid_path_info(Request.blank("/a/b"))
+
     def test_check_invalid_path_info(self):
         request = Request.blank("/%BF%B")
 
         with pytest.raises(InvalidURL):
             IngressTweenFactory.check_invalid_path_info(request)
+
+    def test_check_invalid_form_ok(self):
+        IngressTweenFactory.check_invalid_form(
+            Request.blank(
+                "/",
+                method="POST",
+                content_type="multipart/form-data; boundary=239487389475",
+            )
+        )
 
     def test_check_invalid_form(self):
         request = Request.blank("/", method="POST", content_type="multipart/form-data")
