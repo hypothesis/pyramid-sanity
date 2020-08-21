@@ -15,7 +15,7 @@ class TestSanitySettings:
     @pytest.mark.parametrize("truthy", (True, "True", "1"))
     def test_all_off_by_config(self, truthy):
         sanity_settings = SanitySettings.from_pyramid_settings(
-            {f"pyramid_sanity.disable_all": truthy}
+            {"pyramid_sanity.disable_all": truthy}
         )
 
         self.assert_all_settings_equal(sanity_settings, False)

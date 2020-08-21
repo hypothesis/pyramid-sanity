@@ -33,7 +33,7 @@ class SanitySettings:
         """
         config = SanitySettings()
 
-        if asbool(settings.get(f"pyramid_sanity.disable_all", False)):
+        if asbool(settings.get("pyramid_sanity.disable_all", False)):
             config.all_off()
 
         for key in cls.BOOLEAN_FIELDS:

@@ -21,8 +21,8 @@ def _add_tween(config):
         for tween_name, tween_factory in tweens.implicit():
             tweens.add_explicit(tween_name, tween_factory)
 
-        # TODO! - `warehouse.sanity` adds this after every individual tween,
-        # but I think it only needs to be in once
+        # Question - `warehouse.sanity` adds this after every individual tween,
+        # but I think it only needs to be in once?
         tweens.add_explicit(
             "pyramid_sanity.egress_tween_factory", EgressTweenFactory,
         )

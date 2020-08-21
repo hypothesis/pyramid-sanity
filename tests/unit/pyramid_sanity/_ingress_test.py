@@ -39,8 +39,8 @@ class TestIngressTweenFactory:
         (("check_form", 0), ("check_params", 1), ("check_path", 2),),
     )
     def test_disabling_parts(
-        self, sanity_settings, config_setting, check_position, handler, registry
-    ):
+        self, sanity_settings, config_setting, check_position, handler, registry,
+    ):  # pylint: disable=too-many-arguments
         setattr(sanity_settings, config_setting, False)
 
         tween = IngressTweenFactory(handler, registry)

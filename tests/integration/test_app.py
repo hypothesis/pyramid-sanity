@@ -1,8 +1,6 @@
 import pytest
 from pyramid.config import Configurator
-from pyramid.exceptions import URLDecodeError
 from pyramid.httpexceptions import HTTPFound
-from webob import Request
 from webtest.app import TestApp as WebTestApp
 
 
@@ -81,7 +79,7 @@ class TestIntegration:
             request.POST.get("", None)
             return HTTPFound(location="http://example.com")
 
-        def bad_redirect(request):
+        def bad_redirect(_request):
             return HTTPFound(location="http://example.com/€/☃")
 
         config.add_route("redirect", "/redirect")
