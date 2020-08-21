@@ -29,7 +29,6 @@ config.include("pyramid_sanity")
 Settings
 --------
 
-
 | Pyramid setting | Default | Effect |
 |-----------------|--------|---------|
 | `pyramid_sanity.disable_all` | `False` | Disable all features, so they can be selectively enabled
@@ -55,6 +54,21 @@ All exceptions are defined in `pyramid_sanity.exceptions`:
 | `InvalidQueryString` | Problems with URL parameters    |
 | `InvalidFormData`    | Problems with POST'ed form data |
 | `InvalidURL`         | Problems with the URL itself    |
+
+Attribution
+-----------
+
+The code that ended up here was all initially based on: 
+
+ * https://github.com/pypa/warehouse/blob/master/warehouse/sanity.py
+ 
+The major modifications to this are around the ergonomics:
+
+ * Different errors to allow fine grained handling if you want
+ * Configurable checkers and fixers
+ * Packaging as a separate package etc.
+ 
+From the excellent PyPI [Warehouse](https://github.com/pypa/warehouse/blob/master/README.rst) project. 
 
 Hacking
 -------
