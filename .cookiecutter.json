@@ -1,0 +1,15 @@
+{
+    "project_name": "Pyramid Sanity",
+    "description": "Sensible defaults to catch bad behavior",
+    "project_slug": "pyramid-sanity",
+    "pkg_name": "pyramid_sanity",
+    "options": {
+        "disable_replay": [
+            "README.md",
+            "setup.cfg",
+            "pytest.ini",
+            "src/pyramid_sanity/__init__.py"
+        ]
+    },
+    "_template": "git@github.com:hypothesis/h-cookiecutter-pypackage.git"
+}
