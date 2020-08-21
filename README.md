@@ -7,13 +7,14 @@ Features
 
 * This plugin provides a way to catch a number of encoding errors which happen
  which are otherwise difficult to handle in the Pyramid framework
-* It provides checking for a number of encoding issues with URLs, forms and 
-query parameters
+* Various crashes should now become `BadRequest` causing 400 errors:
+   * Calling with bad unicode query parameters
+   * Calling with bad unicode in the URL
+   * Calling with poorly specified form boundaries
 * In each case a specific exception is raised so you can handle it how you would
 like to
-
-By default, all errors we cannot correct will be returned as a subtype of 
-`BadRequest` causing 400 errors.
+* There is also one fix:
+   * Pyramid emitting redirects with unicode in the URL
 
 Usage
 -----
