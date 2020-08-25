@@ -1,5 +1,6 @@
 [pydocstyle]
-ignore = D104,  # Missing docstring in public package
+ignore = D103,  # Missing docstring in public function
+         D104,  # Missing docstring in public package
                 # Prevents us from having useless comments in __init__.py
          D105,  # Missing docstring in magic method
          D107,  # Missing docstring in __init__

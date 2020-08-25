@@ -27,6 +27,39 @@ config.add_settings({
 config.include("pyramid_sanity")
 ```
 
+Tween Ordering
+--------------
+
+`pyramid_sanity` uses a couple of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
+to do its work.
+
+It's important that `pyramid_sanity.IngressTweenFactory` be the first tween
+and `pyramid_sanity.EgressTweenFactory` be the last tween in your app's tween chain.
+For example, any tween that executes before
+`pyramid_sanity.IngressTweenFactory` can cause your app to crash if it reads
+`request.GET` or `request.POST`. But if the same tween ran _after_
+`pyramid_sanity.IngressTweenFactory` it wouldn't crash your app
+(because `pyramid_sanity` would get there first and send a 400 Bad Request
+response before any other tweens have a chance to crash).
+
+By default, if you just do `config.include("pyramid_sanity")`, `pyramid_sanity`
+will try to put its `IngressTweenFactory` first and its `EgressTweenFactory`
+last in your app's tween chain, using Pyramid's
+["best effort" implicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#suggesting-implicit-tween-ordering)
+and this will generally work as long as your app doesn't add any more tweens or
+include any extensions that add tweens after the `config.include("pyramid_sanity")`.
+
+You can use Pyramid's [`ptweens` command](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/commandline.html#displaying-tweens)
+to check the order of tweens in your app. As long as there are no tweens that
+might access `request.GET` or `request.POST` above
+`pyramid_sanity.IngressTweenFactory`, and there are no tweens that might generate
+non-ASCII-safe redirects below `pyramid_sanity.EgressTweenFactory`, you should
+be fine.
+
+If your app isn't getting the tweens in the right order it can use Pyramid's
+[explicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#explicit-tween-ordering)
+to force the order.
+
 Settings
 --------
 
