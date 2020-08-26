@@ -8,40 +8,52 @@ from pyramid_sanity import includeme
 
 
 class TestIncludeMe:
-    def test_it_puts_the_settings_into_the_registry(
-        self, pyramid_config, SanitySettings, settings
-    ):
-        includeme(config=pyramid_config)
-
-        SanitySettings.from_pyramid_settings.assert_called_once_with(
-            pyramid_config.registry.settings
-        )
-
-        assert pyramid_config.registry.settings["pyramid_sanity"] == settings
-
     @pytest.mark.parametrize(
-        "ingress_required,egress_required",
-        [(True, True), (False, True), (True, False), (False, False),],
+        "check_form,check_params,check_path,ascii_safe_redirects",
+        [
+            (True, True, True, True),
+            (True, False, False, False),
+            (False, True, False, False),
+            (False, False, True, False),
+            (False, False, False, True),
+            (False, False, False, False),
+        ],
     )
-    def test_it_adds_the_tweens(
-        self, ingress_required, egress_required, pyramid_config, settings
+    def test_it_adds_the_invalid_form_tween_factory(  # pylint:disable=too-many-arguments
+        self,
+        check_form,
+        check_params,
+        check_path,
+        ascii_safe_redirects,
+        pyramid_config,
+        settings,
     ):
-        settings.ingress_required = ingress_required
-        settings.egress_required = egress_required
+        settings.check_form = check_form
+        settings.check_params = check_params
+        settings.check_path = check_path
+        settings.ascii_safe_redirects = ascii_safe_redirects
 
-        includeme(config=pyramid_config)
+        includeme(pyramid_config)
 
-        ingress_tween_added = (
-            call("pyramid_sanity.IngressTweenFactory")
+        assert (
+            call("pyramid_sanity.invalid_form_tween_factory")
             in pyramid_config.add_tween.call_args_list
-        )
-        assert ingress_tween_added == ingress_required
+        ) == check_form
 
-        egress_tween_added = (
-            call("pyramid_sanity.EgressTweenFactory", over=MAIN)
+        assert (
+            call("pyramid_sanity.invalid_query_string_tween_factory")
             in pyramid_config.add_tween.call_args_list
-        )
-        assert egress_tween_added == egress_required
+        ) == check_params
+
+        assert (
+            call("pyramid_sanity.invalid_path_info_tween_factory")
+            in pyramid_config.add_tween.call_args_list
+        ) == check_path
+
+        assert (
+            call("pyramid_sanity.ascii_safe_redirects_tween_factory", over=MAIN)
+            in pyramid_config.add_tween.call_args_list
+        ) == ascii_safe_redirects
 
     @pytest.fixture
     def pyramid_config(self):

@@ -2,31 +2,20 @@
 
 import urllib.parse
 
+from pyramid_sanity._ingress import tween_factory
 
-class EgressTweenFactory:
-    """Generate a tween for checking values coming out of Pyramid."""
 
-    def __init__(self, handler, _registry):
-        self.handler = handler
+@tween_factory
+def ascii_safe_redirects_tween_factory(request, handler, _registry):
+    """Ensure redirects are ASCII safe."""
+    response = handler(request)
 
-    def __call__(self, request):
-        """Handle the request as a tween."""
+    if response.location:
+        try:
+            response.location.encode("ascii")
+        except UnicodeEncodeError:
+            response.location = "/".join(
+                [urllib.parse.quote_plus(part) for part in response.location.split("/")]
+            )
 
-        return self.ascii_safe_redirects(self.handler(request))
-
-    @classmethod
-    def ascii_safe_redirects(cls, response):
-        """Ensure redirects are ASCII safe."""
-
-        if response.location:
-            try:
-                response.location.encode("ascii")
-            except UnicodeEncodeError:
-                response.location = "/".join(
-                    [
-                        urllib.parse.quote_plus(part)
-                        for part in response.location.split("/")
-                    ]
-                )
-
-        return response
+    return response

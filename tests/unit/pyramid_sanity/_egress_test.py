@@ -1,22 +1,17 @@
+# @tween_factory confuses PyLint about function arguments:
+# pylint:disable=no-value-for-parameter
+
 import pytest
 
-from pyramid_sanity import EgressTweenFactory
+from pyramid_sanity import ascii_safe_redirects_tween_factory
 
 
-class TestEgressTweenFactory:
-    def test_initialisation(self, handler, registry):
-        tween = EgressTweenFactory(handler, registry)
-
-        assert tween.handler == handler
-
-    def test_it_calls_the_handler(self, tween, request):
+class TestASCIISafeRedirectsTween:
+    def test_it_leaves_non_redirect_responses_alone(self, tween, request, response):
         response = tween(request)
 
-        tween.handler.assert_called_once_with(request)
-        assert response == tween.handler.return_value
+        assert response.location is None
 
-
-class TestChecks:
     def test_it_leaves_ascii_redirects_alone(self, tween, request, response):
         response.location = "/a/b/c"
 
@@ -31,7 +26,6 @@ class TestChecks:
 
         assert response.location == "/%E2%82%AC/%E2%98%83"
 
-
-@pytest.fixture
-def tween(handler, registry):
-    return EgressTweenFactory(handler, registry)
+    @pytest.fixture
+    def tween(self, handler, registry):
+        return ascii_safe_redirects_tween_factory(handler, registry)
