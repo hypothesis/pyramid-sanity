@@ -27,8 +27,7 @@ config.add_settings({
 config.include("pyramid_sanity")
 ```
 
-Tween Ordering
---------------
+### Tween Ordering
 
 `pyramid_sanity` uses a couple of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
 to do its work.
@@ -59,6 +58,25 @@ be fine.
 If your app isn't getting the tweens in the right order it can use Pyramid's
 [explicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#explicit-tween-ordering)
 to force the order.
+
+### Tweens that raise non-ASCII redirects
+
+`pyramid_sanity` protects against non-ASCII redirects raised by your app's
+views by safely encoding them, but it can't protect against _other tweens_ that
+raise non-ASCII redirects. For example this tween might cause a WSGI server
+(like Gunicorn) that's serving your app to crash with `UnicodeEncodeError`:
+
+```python
+def non_ascii_redirecting_tween_factory(handler, registry):
+    def non_ascii_redirecting_tween(request):
+        from pyramid.httpexceptions import HTTPFound
+        raise HTTPFound(location="http://example.com/€/☃")
+    return non_ascii_redirecting_tween
+```
+
+You'll just have to make sure that your app doesn't have any tweens that do this!
+Tweens should encode any redirect locations that they generate,
+[like this](https://github.com/hypothesis/pyramid-sanity/blob/d8492620225ec6be0ba28b3eb49d329ef1e11dc2/src/pyramid_sanity/_egress.py#L22-L30).
 
 Settings
 --------
