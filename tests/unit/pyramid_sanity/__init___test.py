@@ -36,22 +36,22 @@ class TestIncludeMe:
         includeme(pyramid_config)
 
         assert (
-            call("pyramid_sanity.invalid_form_tween_factory")
+            call("pyramid_sanity.tweens.invalid_form_tween_factory")
             in pyramid_config.add_tween.call_args_list
         ) == check_form
 
         assert (
-            call("pyramid_sanity.invalid_query_string_tween_factory")
+            call("pyramid_sanity.tweens.invalid_query_string_tween_factory")
             in pyramid_config.add_tween.call_args_list
         ) == check_params
 
         assert (
-            call("pyramid_sanity.invalid_path_info_tween_factory")
+            call("pyramid_sanity.tweens.invalid_path_info_tween_factory")
             in pyramid_config.add_tween.call_args_list
         ) == check_path
 
         assert (
-            call("pyramid_sanity.ascii_safe_redirects_tween_factory", over=MAIN)
+            call("pyramid_sanity.tweens.ascii_safe_redirects_tween_factory", over=MAIN)
             in pyramid_config.add_tween.call_args_list
         ) == ascii_safe_redirects
 
