@@ -44,8 +44,6 @@ def tween_factory(check):
 def invalid_form_tween_factory(request, handler, _registry):
     """Catch errors relating to poorly formatted POST form data.
 
-    See: https://github.com/Pylons/pyramid/issues/1258
-
     :raise InvalidFormData: if there is poorly-formatted POST form data
     """
 
@@ -62,11 +60,6 @@ def invalid_form_tween_factory(request, handler, _registry):
 def invalid_query_string_tween_factory(request, handler, _registry):
     """Catch errors relating to poorly encoded query parameters.
 
-    See:
-
-    * https://github.com/Pylons/webob/issues/161
-    * https://github.com/Pylons/webob/issues/115
-
     :raise InvalidQueryString: if there are poorly encoded query params
     """
     try:
@@ -80,8 +73,6 @@ def invalid_query_string_tween_factory(request, handler, _registry):
 @tween_factory
 def invalid_path_info_tween_factory(request, handler, _registry):
     """Check for look for invalid UTF-8 bytes in the request path.
-
-    See: https://github.com/Pylons/pyramid/issues/434
 
     :raise InvalidURL: if there are invalid UTF-8 bytes in the request path
     """
