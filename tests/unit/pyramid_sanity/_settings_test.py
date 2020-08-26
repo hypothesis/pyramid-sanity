@@ -39,28 +39,6 @@ class TestSanitySettings:
 
         assert getattr(config, field) == expected
 
-    @pytest.mark.parametrize("value,expected", ((True, True), (False, False)))
-    def test_egress_required(self, sanity_settings, value, expected):
-        sanity_settings.all_off()
-        sanity_settings.ascii_safe_redirects = value
-
-        assert sanity_settings.egress_required == expected
-
-    @pytest.mark.parametrize(
-        "field,expected",
-        (
-            ("check_form", True),
-            ("check_params", True),
-            ("check_path", True),
-            ("irrelevant", False),
-        ),
-    )
-    def test_ingress_required(self, sanity_settings, field, expected):
-        sanity_settings.all_off()
-        setattr(sanity_settings, field, True)
-
-        assert sanity_settings.ingress_required == expected
-
     def assert_all_settings_equal(self, sanity_settings, value):
         assert sanity_settings.ascii_safe_redirects == value
         assert sanity_settings.check_form == value

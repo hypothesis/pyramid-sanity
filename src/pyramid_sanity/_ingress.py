@@ -1,5 +1,11 @@
 """Define tweens that check data on the way into Pyramid."""
 
+# All tweens return the request object, so we don't want to have to document
+# that in every docstring in this file.
+# pylint:disable=missing-return-doc
+
+from functools import wraps
+
 from pyramid_sanity.exceptions import (
     InvalidFormData,
     InvalidQueryString,
@@ -8,81 +14,79 @@ from pyramid_sanity.exceptions import (
 )
 
 
-class IngressTweenFactory:
-    """Generate a tween for checking values on the way into Pyramid."""
+def tween_factory(check):
+    """Create a tween factory from the provided function.
 
-    def __init__(self, handler, registry):
-        self.handler = handler
-        self.checks = list(self.get_checks(registry.settings["pyramid_sanity"]))
+    The function will be called with: (request, handler, registry).
 
-    def __call__(self, request):
-        """Handle the request as a tween."""
+    If the function raises SanityException or any SanityException subclass the
+    exception will be caught and *returned* instead of raised. This is because
+    if a tween raises an HTTPException that skips Pyramid exception views,
+    whereas if a tween *returns* an HTTPException then any matching exception
+    view *does* get called.
+    """
 
-        for check in self.checks:
+    @wraps(check)
+    def factory(handler, registry):
+        def tween(request):
             try:
-                check(request)
-            except SanityException as exc:
-                return exc
+                return check(request, handler, registry)
+            except SanityException as err:
+                return err
 
-        return self.handler(request)
+        return tween
 
-    @classmethod
-    def get_checks(cls, sanity_settings):
-        """Get the correct handlers based on the provided settings.
+    return factory
 
-        :param sanity_settings: An instance of Configuration
-        :returns: A generator of checks to apply to a request
-        :rtype: Functions which accept `request` as a single parameter
-        """
-        if sanity_settings.check_form:
-            yield cls.check_invalid_form
 
-        if sanity_settings.check_params:
-            yield cls.check_invalid_query_string
+@tween_factory
+def invalid_form_tween_factory(request, handler, _registry):
+    """Catch errors relating to poorly formatted POST form data.
 
-        if sanity_settings.check_path:
-            yield cls.check_invalid_path_info
+    See: https://github.com/Pylons/pyramid/issues/1258
 
-    @classmethod
-    def check_invalid_form(cls, request):
-        """Catch errors relating to poorly formatted POST form data.
+    :raise InvalidFormData: if there is poorly-formatted POST form data
+    """
 
-        :raise InvalidFormData: When any error is encountered
-        """
-
-        # Ref: https://github.com/Pylons/pyramid/issues/1258
-
-        if request.method == "POST":
-            try:
-                request.POST.get("", None)
-            except ValueError as err:
-                raise InvalidFormData("Invalid form data") from err
-
-    @classmethod
-    def check_invalid_query_string(cls, request):
-        """Catch errors relating to poorly encoded URL parameters.
-
-        :raise InvalidQueryString: When any error is encountered
-        """
-
-        # Ref: https://github.com/Pylons/webob/issues/161
-        # Ref: https://github.com/Pylons/webob/issues/115
-
+    if request.method == "POST":
         try:
-            request.GET.get("", None)
-        except UnicodeDecodeError as err:
-            raise InvalidQueryString("Invalid bytes in query string") from err
+            request.POST.get("", None)
+        except ValueError as err:
+            raise InvalidFormData("Invalid form data") from err
 
-    @classmethod
-    def check_invalid_path_info(cls, request):
-        """Check for look for invalid UTF-8 bytes in a path.
+    return handler(request)
 
-        :raise InvalidURL: When any error is encountered
-        """
 
-        # Ref: https://github.com/Pylons/pyramid/issues/434
+@tween_factory
+def invalid_query_string_tween_factory(request, handler, _registry):
+    """Catch errors relating to poorly encoded query parameters.
 
-        try:
-            request.path_info
-        except UnicodeDecodeError as err:
-            raise InvalidURL("Invalid bytes in URL") from err
+    See:
+
+    * https://github.com/Pylons/webob/issues/161
+    * https://github.com/Pylons/webob/issues/115
+
+    :raise InvalidQueryString: if there are poorly encoded query params
+    """
+    try:
+        request.GET.get("", None)
+    except UnicodeDecodeError as err:
+        raise InvalidQueryString("Invalid bytes in query string") from err
+
+    return handler(request)
+
+
+@tween_factory
+def invalid_path_info_tween_factory(request, handler, _registry):
+    """Check for look for invalid UTF-8 bytes in the request path.
+
+    See: https://github.com/Pylons/pyramid/issues/434
+
+    :raise InvalidURL: if there are invalid UTF-8 bytes in the request path
+    """
+    try:
+        request.path_info
+    except UnicodeDecodeError as err:
+        raise InvalidURL("Invalid bytes in URL") from err
+
+    return handler(request)
