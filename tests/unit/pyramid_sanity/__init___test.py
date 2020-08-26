@@ -1,72 +1,59 @@
-from unittest.mock import call, patch
+from unittest.mock import call
 
 import pytest
-from pyramid.config import Configurator
 from pyramid.tweens import MAIN
 
 from pyramid_sanity import includeme
 
 
 class TestIncludeMe:
-    @pytest.mark.parametrize(
-        "check_form,check_params,check_path,ascii_safe_redirects",
-        [
-            (True, True, True, True),
-            (True, False, False, False),
-            (False, True, False, False),
-            (False, False, True, False),
-            (False, False, False, True),
-            (False, False, False, False),
-        ],
+    ALL_TWEEN_SETTINGS = (
+        "pyramid_sanity.check_form",
+        "pyramid_sanity.check_params",
+        "pyramid_sanity.check_path",
+        "pyramid_sanity.ascii_safe_redirects",
     )
-    def test_it_adds_the_invalid_form_tween_factory(  # pylint:disable=too-many-arguments
-        self,
-        check_form,
-        check_params,
-        check_path,
-        ascii_safe_redirects,
-        pyramid_config,
-        settings,
+
+    ALL_TWEEN_CALLS = (
+        call("pyramid_sanity.tweens.invalid_form_tween_factory"),
+        call("pyramid_sanity.tweens.invalid_query_string_tween_factory"),
+        call("pyramid_sanity.tweens.invalid_path_info_tween_factory"),
+        call("pyramid_sanity.tweens.ascii_safe_redirects_tween_factory", over=MAIN),
+    )
+
+    SETTINGS_AND_CALLS = tuple(zip(ALL_TWEEN_SETTINGS, ALL_TWEEN_CALLS))
+
+    def test_all_tweens_are_enabled_by_default(self, pyramid_config):
+        includeme(pyramid_config)
+
+        assert pyramid_config.add_tween.call_args_list == list(self.ALL_TWEEN_CALLS)
+
+    @pytest.mark.parametrize("setting,missing_call", SETTINGS_AND_CALLS)
+    def test_individual_tweens_can_be_disabled(
+        self, pyramid_config, setting, missing_call
     ):
-        settings.check_form = check_form
-        settings.check_params = check_params
-        settings.check_path = check_path
-        settings.ascii_safe_redirects = ascii_safe_redirects
+        pyramid_config.registry.settings[setting] = False
 
         includeme(pyramid_config)
 
-        assert (
-            call("pyramid_sanity.tweens.invalid_form_tween_factory")
-            in pyramid_config.add_tween.call_args_list
-        ) == check_form
+        expected_calls = list(self.ALL_TWEEN_CALLS)
+        expected_calls.remove(missing_call)
+        assert pyramid_config.add_tween.call_args_list == expected_calls
 
-        assert (
-            call("pyramid_sanity.tweens.invalid_query_string_tween_factory")
-            in pyramid_config.add_tween.call_args_list
-        ) == check_params
+    def test_disable_removes_all_tweens(self, pyramid_config):
+        pyramid_config.registry.settings["pyramid_sanity.disable_all"] = True
 
-        assert (
-            call("pyramid_sanity.tweens.invalid_path_info_tween_factory")
-            in pyramid_config.add_tween.call_args_list
-        ) == check_path
+        includeme(pyramid_config)
 
-        assert (
-            call("pyramid_sanity.tweens.ascii_safe_redirects_tween_factory", over=MAIN)
-            in pyramid_config.add_tween.call_args_list
-        ) == ascii_safe_redirects
+        pyramid_config.add_tween.assert_not_called()
 
-    @pytest.fixture
-    def pyramid_config(self):
-        with Configurator() as config:
-            with patch.object(config, "add_tween", auto_spec=True):
-                yield config
+    @pytest.mark.parametrize("setting,expected_call", SETTINGS_AND_CALLS)
+    def test_disabled_tweens_can_be_individually_enabled(
+        self, pyramid_config, setting, expected_call
+    ):
+        pyramid_config.registry.settings["pyramid_sanity.disable_all"] = True
+        pyramid_config.registry.settings[setting] = True
 
+        includeme(pyramid_config)
 
-@pytest.fixture(autouse=True)
-def SanitySettings(patch):
-    return patch("pyramid_sanity.SanitySettings")
-
-
-@pytest.fixture
-def settings(SanitySettings):
-    return SanitySettings.from_pyramid_settings.return_value
+        assert pyramid_config.add_tween.call_args_list == [expected_call]

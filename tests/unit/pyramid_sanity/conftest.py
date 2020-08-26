@@ -2,15 +2,13 @@ from unittest import mock
 from unittest.mock import create_autospec
 
 import pytest
-from pyramid.registry import Registry
+from pyramid import testing
 from pyramid.response import Response
-
-from pyramid_sanity._settings import SanitySettings
 
 
 @pytest.fixture
-def registry():
-    return Registry()
+def response():
+    return Response()
 
 
 @pytest.fixture
@@ -22,17 +20,24 @@ def handler(response):
 
 
 @pytest.fixture
-def response():
-    return Response()
+def pyramid_request():
+    return testing.DummyRequest()
 
 
 @pytest.fixture
-def sanity_settings():
-    return SanitySettings()
+def pyramid_config(pyramid_request):
+    with testing.testConfig(request=pyramid_request, settings={}) as config:
+        with mock.patch.object(config, "add_tween", auto_spec=True):
+            yield config
 
 
 @pytest.fixture
-def patch(request):
+def registry(pyramid_config):
+    return pyramid_config.registry
+
+
+@pytest.fixture
+def patch(request):  # pragma:nocover
     def autopatcher(target):
         """Patch and cleanup automatically. Wraps :py:func:`mock.patch`."""
 
