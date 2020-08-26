@@ -23,41 +23,65 @@ Usage
 config.add_settings({
     "pyramid_sanity.ascii_safe_redirects": False
     # See below for all available settings
-})  
+})
+
+# Important! Add as near to the end of your config as possible:
 config.include("pyramid_sanity")
 ```
 
-### Tween Ordering
+Settings
+--------
+
+| Pyramid setting | Default | Effect |
+|-----------------|--------|---------|
+| `pyramid_sanity.disable_all` | `False` | Disable all features, so they can be selectively enabled
+| `pyramid_sanity.check_form` | `True` | Check for badly declared forms
+| `pyramid_sanity.check_params` | `True` | Check for encoding errors in URL parameters
+| `pyramid_sanity.check_path` | `True` | Check for encoding errors in the URL path
+| `pyramid_sanity.ascii_safe_redirects` | `True` | Ensure redirects do not include raw unicode characters
+
+Exceptions
+----------
+
+In most cases we simply check for error conditions that would occur before your
+code runs. If we encounter them we raise distinct errors to allow you to handle
+them however you'd like.
+
+By default all errors are a child of `pyramid.httpexceptions.HTTPBadRequest`
+and should result in a `400 Bad Request` error page.
+
+All exceptions are defined in `pyramid_sanity.exceptions`:
+
+| Exception            | Raised for                      |
+|----------------------|---------------------------------|
+| `InvalidQueryString` | Problems with URL parameters    |
+| `InvalidFormData`    | Problems with POST'ed form data |
+| `InvalidURL`         | Problems with the URL itself    |
+
+Tween ordering
+--------------
 
 `pyramid_sanity` uses a couple of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
-to do its work.
+to do its work. It's important that your app's tween chain has:
+ 
+ * `pyramid_sanity.IngressTweenFactory` first
+ * `pyramid_sanity.EgressTweenFactory` last 
 
-It's important that `pyramid_sanity.IngressTweenFactory` be the first tween
-and `pyramid_sanity.EgressTweenFactory` be the last tween in your app's tween chain.
-For example, any tween that executes before
-`pyramid_sanity.IngressTweenFactory` can cause your app to crash if it reads
-`request.GET` or `request.POST`. But if the same tween ran _after_
-`pyramid_sanity.IngressTweenFactory` it wouldn't crash your app
-(because `pyramid_sanity` would get there first and send a 400 Bad Request
-response before any other tweens have a chance to crash).
-
-By default, if you just do `config.include("pyramid_sanity")`, `pyramid_sanity`
-will try to put its `IngressTweenFactory` first and its `EgressTweenFactory`
-last in your app's tween chain, using Pyramid's
+The easiest way to achieve this is to include `config.include("pyramid_sanity")`
+**as late as possible** in your config. This uses Pyramid's
 ["best effort" implicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#suggesting-implicit-tween-ordering)
-and this will generally work as long as your app doesn't add any more tweens or
-include any extensions that add tweens after the `config.include("pyramid_sanity")`.
+to add the tweens and should work as long as your app doesn't add any 
+more tweens, or include any extensions that add tweens, afterwards.
 
-You can use Pyramid's [`ptweens` command](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/commandline.html#displaying-tweens)
-to check the order of tweens in your app. As long as there are no tweens that
-might access `request.GET` or `request.POST` above
-`pyramid_sanity.IngressTweenFactory`, and there are no tweens that might generate
-non-ASCII-safe redirects below `pyramid_sanity.EgressTweenFactory`, you should
-be fine.
+You can to check the order of tweens in your app with Pyramid's 
+[`ptweens` command](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/commandline.html#displaying-tweens).
+As long as there are no tweens which access `request.GET` or 
+`request.POST` above `pyramid_sanity.IngressTweenFactory`, or generate 
+redirects below `pyramid_sanity.EgressTweenFactory`, you should be fine.
 
-If your app isn't getting the tweens in the right order it can use Pyramid's
+You can force the order with Pyramid's
 [explicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#explicit-tween-ordering)
-to force the order.
+if you need to.
 
 ### Tweens that raise non-ASCII redirects
 
@@ -78,34 +102,6 @@ You'll just have to make sure that your app doesn't have any tweens that do this
 Tweens should encode any redirect locations that they generate,
 [like this](https://github.com/hypothesis/pyramid-sanity/blob/d8492620225ec6be0ba28b3eb49d329ef1e11dc2/src/pyramid_sanity/_egress.py#L22-L30).
 
-Settings
---------
-
-| Pyramid setting | Default | Effect |
-|-----------------|--------|---------|
-| `pyramid_sanity.disable_all` | `False` | Disable all features, so they can be selectively enabled
-| `pyramid_sanity.check_form` | `True` | Check for badly declared forms
-| `pyramid_sanity.check_params` | `True` | Check for encoding errors in URL parameters
-| `pyramid_sanity.check_path` | `True` | Check for encoding errors in the URL path
-| `pyramid_sanity.ascii_safe_redirects` | `True` | Ensure redirects do not include raw unicode characters
-
-Exceptions
-----------
-
-In most cases we simply check for error conditions that would occur before your
-code runs. If we encounter them we raise distinct errors to allow you to handle
-them however you'd like.
-
-By default all errors are a child of `pyramid.httpexceptions. HTTPBadRequest`
-and should result in a 400 error page.
-
-All exceptions are defined in `pyramid_sanity.exceptions`:
-
-| Exception            | Raised for                      |
-|----------------------|---------------------------------|
-| `InvalidQueryString` | Problems with URL parameters    |
-| `InvalidFormData`    | Problems with POST'ed form data |
-| `InvalidURL`         | Problems with the URL itself    |
 
 Attribution
 -----------
