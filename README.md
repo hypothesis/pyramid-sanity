@@ -1,67 +1,189 @@
 # pyramid-sanity
 
-Sensible defaults to catch bad behavior
+A Pyramid extension that fixes crashes caused by certain badly formed requests,
+turning them into 400 Bad Request responses instead.
+Also prevents apps from returning HTTP redirects with badly encoded locations
+that can crash WSGI servers.
 
-Features
---------
+<details>
+<summary>Example Pyramid app that reproduces the crashes below</summary>
 
-* This plugin provides a way to catch a number of encoding errors which happen
- which are otherwise difficult to handle in the Pyramid framework
-* Various crashes should now become `BadRequest` causing 400 errors:
-   * Calling with bad unicode query parameters
-   * Calling with bad unicode in the URL
-   * Calling with poorly specified form boundaries
-* In each case a specific exception is raised so you can handle it how you would
-like to
-* There is also one fix:
-   * Pyramid emitting redirects with unicode in the URL
+```python
+from wsgiref.simple_server import make_server
+from pyramid.config import Configurator
+from pyramid.response import Response
+from pyramid.httpexceptions import HTTPFound
+
+def redirect(request):
+    # Return a redirect to a URL with a non-ASCII character in it.
+    return HTTPFound(location="http://example.com/☃")
+
+def hello_world(request):
+    return Response(f"Hello World! Query string was: {request.GET}. Form body was: {request.POST}")
+
+if __name__ == "__main__":
+    with Configurator() as config:
+        config.add_route("redirect", "/redirect")
+        config.add_route("hello", "/{anything}")
+        config.add_view(hello_world, route_name="hello")
+        config.add_view(redirect, route_name="redirect")
+        app = config.make_wsgi_app()
+    server = make_server("0.0.0.0", 6543, app)
+    server.serve_forever()
+```
+
+</details>
+
+Crashes that `pyramid-sanity` fixes:
+
+<details>
+<summary>A request with a badly encoded query parameter can crash an app when the app tries to access <code>request.GET</code>.</summary>
+
+With the example Pyramid app above, this will raise an uncaught
+`UnicodeDecodeError` from WebOb:
+
+```terminal
+curl 'http://localhost:6543/foo?q=%FC'
+```
+
+`pyramid-sanity` catches this and turns it into a 400 Bad Request response.
+
+Related issues:
+
+* https://github.com/Pylons/pyramid/issues/3399
+* https://github.com/Pylons/webob/issues/161
+
+</details>
+
+<details>
+<summary>A request with a badly encoded path can crash an app.</summary>
+
+With the example app above this will raise an uncaught
+`pyramid.exceptions.URLDecodeError`:
+
+```terminal
+curl 'http://localhost:6543/%FC'
+```
+
+`pyramid-sanity` catches this and turns it into a 400 Bad Request response.
+
+The 500 Server Error here is actually deliberate behavior from Pyramid:
+Pyramid raises [`URLDecodeError`](https://docs.pylonsproject.org/projects/pyramid/en/latest/api/exceptions.html#pyramid.exceptions.URLDecodeError)
+and does not have a built-in exception view for `URLDecodeError`. Apps can
+change this to a 400 Bad Request by registering a custom exception view for
+`URLDecodeError`. See <https://github.com/Pylons/pyramid/issues/312#issuecomment-2322368>.
+
+Related issues:
+
+* https://github.com/Pylons/pyramid/issues/434
+* https://github.com/Pylons/pyramid/issues/1374
+* https://github.com/Pylons/pyramid/issues/2047
+* https://github.com/Pylons/webob/issues/114
+* https://github.com/hypothesis/h/issues/4915
+* https://github.com/hypothesis/h/pull/4916
+
+</details>
+
+<details>
+<summary>A bad form submission can crash an app when the app tries to access <code>request.POST</code>.</summary>
+
+With the example app above this will raise an uncaught `ValueError` from WebOb:
+
+```terminal
+curl --request POST --url http://localhost:6543/foo --header 'content-type: multipart/form-data'
+```
+
+`pyramid-sanity` catches this and turns it into a 400 Bad Request response.
+
+Related issues:
+
+* https://github.com/Pylons/pyramid/issues/1258
+
+</details>
+
+<details>
+<summary>If an app returns a redirect with a badly encoded location it can crash the WSGI server.</summary>
+
+With the example app above this will raise an uncaught `AttributeError` from `wsgiref.simple_server`:
+
+```terminal
+curl http://localhost:6543/redirect
+```
+
+`pyramid-sanity` intercepts this and safely encodes the redirect location.
+
+</details>
 
 Usage
 -----
 
 ```python
-config.add_settings({
-    "pyramid_sanity.ascii_safe_redirects": False
-    # See below for all available settings
-})
-
-# Important! Add as near to the end of your config as possible:
-config.include("pyramid_sanity")
+with Configurator() as config:
+    # Add this as near to the end of your config as possible:
+    config.include("pyramid_sanity")
 ```
 
 Settings
 --------
 
-| Pyramid setting | Default | Effect |
-|-----------------|--------|---------|
-| `pyramid_sanity.disable_all` | `False` | Disable all features, so they can be selectively enabled
-| `pyramid_sanity.check_form` | `True` | Check for badly declared forms
-| `pyramid_sanity.check_params` | `True` | Check for encoding errors in URL parameters
-| `pyramid_sanity.check_path` | `True` | Check for encoding errors in the URL path
-| `pyramid_sanity.ascii_safe_redirects` | `True` | Ensure redirects do not include raw unicode characters
+By default all fixes are enabled. You can disable them individually with settings:
+
+```python
+with Configurator() as config:
+    config.add_settings({
+        # Don't check for badly declared forms.
+        "pyramid_sanity.check_form": False,
+
+        # Don't check for badly encoded query params.
+        "pyramid_sanity.check_params": False,
+
+        # Don't check for badly encoded URL paths.
+        "pyramid_sanity.check_path": False,
+
+        # Don't safely encode redirect locations.
+        "pyramid_sanity.ascii_safe_redirects": False
+    })
+    config.include("pyramid_sanity")
+```
+
+You can set `pyramid_sanity.disable_all` to `True` to disable all of the fixes,
+then enable only certain fixes one by one:
+
+```python
+with Configurator() as config:
+    config.add_settings({
+        # Disable all fixes.
+        "pyramid_sanity.disable_all": True,
+
+        # Enable only the badly encoded query params fix.
+        "pyramid_sanity.check_params": True,
+    })
+    config.include("pyramid_sanity")
+```
 
 Exceptions
 ----------
 
-In most cases we simply check for error conditions that would occur before your
-code runs. If we encounter them we raise distinct errors to allow you to handle
-them however you'd like.
+`pyramid-sanity` triggers 400 Bad Request responses by returning
+`pyramid.httpexceptions.HTTPBadRequest` subclasses.
 
-By default all errors are a child of `pyramid.httpexceptions.HTTPBadRequest`
-and should result in a `400 Bad Request` error page.
+All exceptions returned by `pyramid-sanity` are subclasses of
+`pyramid_sanity.exceptions.SanityException` (which is a subclass of
+`HTTPBadRequest`) and different exception subclasses are returned for different
+problems, so you can register
+[custom exception views](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/views.html#custom-exception-views)
+to handle them if you want:
 
-All exceptions are defined in `pyramid_sanity.exceptions`:
-
-| Exception            | Raised for                      |
-|----------------------|---------------------------------|
-| `InvalidQueryString` | Problems with URL parameters    |
-| `InvalidFormData`    | Problems with POST'ed form data |
-| `InvalidURL`         | Problems with the URL itself    |
+| Exception                                      | Returned for                    |
+|------------------------------------------------|---------------------------------|
+| `pyramid_sanity.exceptions.InvalidQueryString` | Badly encoded query params      |
+| `pyramid_sanity.exceptions.InvalidFormData`    | Bad form posts                  |
+| `pyramid_sanity.exceptions.InvalidURL`         | Badly encoded URL paths         |
 
 Tween ordering
 --------------
 
-`pyramid_sanity` uses a number of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
+`pyramid-sanity` uses a number of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
 to do its work. It's important that your app's tween chain has:
  
  * Our tweens that check for errors in the request, first
@@ -85,7 +207,7 @@ if you need to.
 
 ### Tweens that raise non-ASCII redirects
 
-`pyramid_sanity` protects against non-ASCII redirects raised by your app's
+`pyramid-sanity` protects against non-ASCII redirects raised by your app's
 views by safely encoding them, but it can't protect against _other tweens_ that
 raise non-ASCII redirects. For example this tween might cause a WSGI server
 (like Gunicorn) that's serving your app to crash with `UnicodeEncodeError`:
@@ -105,18 +227,9 @@ Tweens should encode any redirect locations that they generate,
 Attribution
 -----------
 
-The code that ended up here was all initially based on: 
-
- * https://github.com/pypa/warehouse/blob/master/warehouse/sanity.py
- 
-From the excellent PyPI [Warehouse](https://github.com/pypa/warehouse/blob/master/README.rst) project. 
- 
-The major modifications to this are around the ergonomics:
-
- * Different errors to allow fine grained handling if you want
- * Configurable checkers and fixers
- * Implicit tweens rather than explicit ones
- * Packaging as a separate package etc.
+`pyramid-sanity` was initially based on the solution used by
+[Warehouse's `sanity.py`](https://github.com/pypa/warehouse/blob/master/warehouse/sanity.py),
+but wraps the fixes up in a Pyramid extension that's easy to add to apps.
 
 Hacking
 -------
