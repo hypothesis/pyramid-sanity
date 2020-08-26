@@ -42,13 +42,3 @@ class SanitySettings:
                 setattr(config, key, asbool(value))
 
         return config
-
-    @property
-    def egress_required(self):
-        """Get whether any egress options are enabled."""
-        return self.ascii_safe_redirects
-
-    @property
-    def ingress_required(self):
-        """Get whether any ingress options are enabled."""
-        return any((self.check_form, self.check_params, self.check_path))

@@ -3,15 +3,9 @@ from unittest.mock import create_autospec
 
 import pytest
 from pyramid.registry import Registry
-from pyramid.request import Request
 from pyramid.response import Response
 
 from pyramid_sanity._settings import SanitySettings
-
-
-@pytest.fixture
-def pyramid_request():
-    return create_autospec(Request, instance=True)
 
 
 @pytest.fixture

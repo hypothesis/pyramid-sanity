@@ -1,119 +1,70 @@
-from unittest.mock import create_autospec
+# @tween_factory confuses PyLint about function arguments:
+# pylint:disable=no-value-for-parameter
 
 import pytest
 from pyramid.request import Request
 
-from pyramid_sanity._ingress import IngressTweenFactory
-from pyramid_sanity.exceptions import (
-    InvalidFormData,
-    InvalidQueryString,
-    InvalidURL,
-    SanityException,
+from pyramid_sanity._ingress import (
+    invalid_form_tween_factory,
+    invalid_path_info_tween_factory,
+    invalid_query_string_tween_factory,
 )
+from pyramid_sanity.exceptions import InvalidFormData, InvalidQueryString, InvalidURL
 
 
-def make_check(raises=None):
-    check = create_autospec(lambda handler: None)  # pragma: no cover
-    if raises:
-        check.side_effect = raises
+class SharedTests:
+    """Shared tests that apply to all tweens."""
 
-    return check
+    def test_it_does_nothing_for_valid_requests(self, handler, tween):
+        # A request with a valid path, query string and form body.
+        req = Request.blank(
+            "/a/b?a=1",
+            method="POST",
+            content_type="multipart/form-data; boundary=239487389475",
+        )
+
+        response = tween(req)
+
+        handler.assert_called_once_with(req)
+        assert response == handler.return_value
 
 
-ALL_CHECKS = (
-    IngressTweenFactory.check_invalid_form,
-    IngressTweenFactory.check_invalid_query_string,
-    IngressTweenFactory.check_invalid_path_info,
-)
+class TestInvalidFormTween(SharedTests):
+    def test_it_returns_InvalidFormData_for_invalid_form_post_requests(self, tween):
+        req = Request.blank("/", method="POST", content_type="multipart/form-data")
 
+        result = tween(req)
 
-class TestIngressTweenFactory:
-    def test_plain_initialisation(self, handler, registry):
-        tween = IngressTweenFactory(handler, registry)
-
-        assert tween.handler == handler
-        assert tween.checks == list(ALL_CHECKS)
-
-    @pytest.mark.parametrize(
-        "config_setting,check_position",
-        (("check_form", 0), ("check_params", 1), ("check_path", 2),),
-    )
-    def test_disabling_parts(
-        self, sanity_settings, config_setting, check_position, handler, registry,
-    ):  # pylint: disable=too-many-arguments
-        setattr(sanity_settings, config_setting, False)
-
-        tween = IngressTweenFactory(handler, registry)
-
-        checks = list(ALL_CHECKS)
-        checks.pop(check_position)
-        assert tween.checks == checks
-
-    def test_tween_calls_the_checkers(self, tween, pyramid_request):
-        tween.checks = [make_check(), make_check()]
-
-        tween(pyramid_request)
-
-        for check in tween.checks:
-            check.assert_called_once_with(pyramid_request)
-
-    def test_tween_calls_handler(self, tween, pyramid_request):
-        response = tween(pyramid_request)
-
-        tween.handler.assert_called_once_with(pyramid_request)
-        assert response == tween.handler.return_value
-
-    def test_tween_returns_exception_if_check_raises_SanityException(
-        self, tween, pyramid_request
-    ):
-        check = make_check(raises=SanityException("Terrible news"))
-        tween.checks = [check]
-
-        response = tween(pyramid_request)
-
-        assert response == check.side_effect
-
-    def test_tween_raises_if_check_raises_normal_error(self, tween, pyramid_request):
-        tween.checks = [make_check(raises=ValueError("Terrible news"))]
-
-        with pytest.raises(ValueError):
-            tween(pyramid_request)
+        assert isinstance(result, InvalidFormData)
 
     @pytest.fixture
     def tween(self, handler, registry):
-        return IngressTweenFactory(handler, registry)
+        return invalid_form_tween_factory(handler, registry)
 
 
-class TestChecks:
-    def test_check_invalid_query_string_ok(self):
-        IngressTweenFactory.check_invalid_query_string(Request.blank("/?a=1"))
+class TestInvalidQueryStringTween(SharedTests):
+    def test_it_returns_InvalidQueryString_for_requests_with_invalid_query_strings(
+        self, tween
+    ):
+        req = Request.blank("/?f%FC=123")
 
-    def test_check_invalid_query_string(self):
-        request = Request.blank("/?f%FC=123")
+        result = tween(req)
 
-        with pytest.raises(InvalidQueryString):
-            IngressTweenFactory.check_invalid_query_string(request)
+        assert isinstance(result, InvalidQueryString)
 
-    def test_check_invalid_path_info_ok(self):
-        IngressTweenFactory.check_invalid_path_info(Request.blank("/a/b"))
+    @pytest.fixture
+    def tween(self, handler, registry):
+        return invalid_query_string_tween_factory(handler, registry)
 
-    def test_check_invalid_path_info(self):
-        request = Request.blank("/%BF%B")
 
-        with pytest.raises(InvalidURL):
-            IngressTweenFactory.check_invalid_path_info(request)
+class TestInvalidPathInfoTween(SharedTests):
+    def test_it_returns_InvalidURL_for_requests_with_invalid_paths(self, tween):
+        req = Request.blank("/%BF%B")
 
-    def test_check_invalid_form_ok(self):
-        IngressTweenFactory.check_invalid_form(
-            Request.blank(
-                "/",
-                method="POST",
-                content_type="multipart/form-data; boundary=239487389475",
-            )
-        )
+        result = tween(req)
 
-    def test_check_invalid_form(self):
-        request = Request.blank("/", method="POST", content_type="multipart/form-data")
+        assert isinstance(result, InvalidURL)
 
-        with pytest.raises(InvalidFormData):
-            IngressTweenFactory.check_invalid_form(request)
+    @pytest.fixture
+    def tween(self, handler, registry):
+        return invalid_path_info_tween_factory(handler, registry)
