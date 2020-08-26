@@ -61,11 +61,11 @@ All exceptions are defined in `pyramid_sanity.exceptions`:
 Tween ordering
 --------------
 
-`pyramid_sanity` uses a couple of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
+`pyramid_sanity` uses a number of Pyramid [tweens](https://docs.pylonsproject.org/projects/pyramid/en/latest/glossary.html#term-tween)
 to do its work. It's important that your app's tween chain has:
  
- * `pyramid_sanity.IngressTweenFactory` first
- * `pyramid_sanity.EgressTweenFactory` last 
+ * Our tweens that check for errors in the request, first
+ * Our tweens that check for errors in the output of your app, last
 
 The easiest way to achieve this is to include `config.include("pyramid_sanity")`
 **as late as possible** in your config. This uses Pyramid's
@@ -75,9 +75,9 @@ more tweens, or include any extensions that add tweens, afterwards.
 
 You can to check the order of tweens in your app with Pyramid's 
 [`ptweens` command](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/commandline.html#displaying-tweens).
-As long as there are no tweens which access `request.GET` or 
-`request.POST` above `pyramid_sanity.IngressTweenFactory`, or generate 
-redirects below `pyramid_sanity.EgressTweenFactory`, you should be fine.
+As long as there are no tweens which access `request.GET` or `request.POST`
+above the input checking tweens, or generate redirects below output checking
+tweens, you should be fine.
 
 You can force the order with Pyramid's
 [explicit tween ordering](https://docs.pylonsproject.org/projects/pyramid/en/latest/narr/hooks.html#explicit-tween-ordering)
@@ -102,7 +102,6 @@ You'll just have to make sure that your app doesn't have any tweens that do this
 Tweens should encode any redirect locations that they generate,
 [like this](https://github.com/hypothesis/pyramid-sanity/blob/d8492620225ec6be0ba28b3eb49d329ef1e11dc2/src/pyramid_sanity/_egress.py#L22-L30).
 
-
 Attribution
 -----------
 
@@ -116,6 +115,7 @@ The major modifications to this are around the ergonomics:
 
  * Different errors to allow fine grained handling if you want
  * Configurable checkers and fixers
+ * Implicit tweens rather than explicit ones
  * Packaging as a separate package etc.
 
 Hacking
