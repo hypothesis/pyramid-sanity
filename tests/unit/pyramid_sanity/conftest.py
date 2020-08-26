@@ -9,11 +9,8 @@ from pyramid_sanity._settings import SanitySettings
 
 
 @pytest.fixture
-def registry(sanity_settings):
-    registry = Registry()
-    registry.settings = {"pyramid_sanity": sanity_settings}
-
-    return registry
+def registry():
+    return Registry()
 
 
 @pytest.fixture

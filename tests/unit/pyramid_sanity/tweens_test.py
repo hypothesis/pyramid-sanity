@@ -4,12 +4,13 @@
 import pytest
 from pyramid.request import Request
 
-from pyramid_sanity._ingress import (
+from pyramid_sanity.exceptions import InvalidFormData, InvalidQueryString, InvalidURL
+from pyramid_sanity.tweens import (
+    ascii_safe_redirects_tween_factory,
     invalid_form_tween_factory,
     invalid_path_info_tween_factory,
     invalid_query_string_tween_factory,
 )
-from pyramid_sanity.exceptions import InvalidFormData, InvalidQueryString, InvalidURL
 
 
 class SharedTests:
@@ -68,3 +69,23 @@ class TestInvalidPathInfoTween(SharedTests):
     @pytest.fixture
     def tween(self, handler, registry):
         return invalid_path_info_tween_factory(handler, registry)
+
+
+class TestASCIISafeRedirectsTween(SharedTests):
+    def test_it_leaves_ascii_redirects_alone(self, tween, request, response):
+        response.location = "/a/b/c"
+
+        response = tween(request)
+
+        assert response.location == "/a/b/c"
+
+    def test_it_encodes_unicode_redirects(self, tween, request, response):
+        response.location = "/€/☃"
+
+        response = tween(request)
+
+        assert response.location == "/%E2%82%AC/%E2%98%83"
+
+    @pytest.fixture
+    def tween(self, handler, registry):
+        return ascii_safe_redirects_tween_factory(handler, registry)

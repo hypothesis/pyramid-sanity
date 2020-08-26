@@ -1,9 +1,10 @@
-"""Define tweens that check data on the way into Pyramid."""
+"""Pyramid tweens."""
 
 # All tweens return the request object, so we don't want to have to document
 # that in every docstring in this file.
 # pylint:disable=missing-return-doc
 
+import urllib.parse
 from functools import wraps
 
 from pyramid_sanity.exceptions import (
@@ -90,3 +91,19 @@ def invalid_path_info_tween_factory(request, handler, _registry):
         raise InvalidURL("Invalid bytes in URL") from err
 
     return handler(request)
+
+
+@tween_factory
+def ascii_safe_redirects_tween_factory(request, handler, _registry):
+    """Ensure redirects are ASCII safe."""
+    response = handler(request)
+
+    if response.location:
+        try:
+            response.location.encode("ascii")
+        except UnicodeEncodeError:
+            response.location = "/".join(
+                [urllib.parse.quote_plus(part) for part in response.location.split("/")]
+            )
+
+    return response

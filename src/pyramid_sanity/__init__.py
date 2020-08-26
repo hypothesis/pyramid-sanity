@@ -1,14 +1,6 @@
 from pyramid.tweens import MAIN
 
-from pyramid_sanity._egress import ascii_safe_redirects_tween_factory
-from pyramid_sanity._ingress import (
-    invalid_form_tween_factory,
-    invalid_path_info_tween_factory,
-    invalid_query_string_tween_factory,
-)
 from pyramid_sanity._settings import SanitySettings
-
-__all__ = ["includeme"]
 
 
 def includeme(config):
@@ -22,13 +14,13 @@ def includeme(config):
     # Other tweens that get added later might get added above this tween, but
     # it's up to the app to manage that.
     if settings.check_form:
-        config.add_tween("pyramid_sanity.invalid_form_tween_factory")
+        config.add_tween("pyramid_sanity.tweens.invalid_form_tween_factory")
 
     if settings.check_params:
-        config.add_tween("pyramid_sanity.invalid_query_string_tween_factory")
+        config.add_tween("pyramid_sanity.tweens.invalid_query_string_tween_factory")
 
     if settings.check_path:
-        config.add_tween("pyramid_sanity.invalid_path_info_tween_factory")
+        config.add_tween("pyramid_sanity.tweens.invalid_path_info_tween_factory")
 
     if settings.ascii_safe_redirects:
         # add_tween() with `over=MAIN` will add the tween to the "bottom" of
@@ -37,4 +29,6 @@ def includeme(config):
         #
         # Other tweens that get added later might get added below this tween,
         # but it's up to the app to manage that.
-        config.add_tween("pyramid_sanity.ascii_safe_redirects_tween_factory", over=MAIN)
+        config.add_tween(
+            "pyramid_sanity.tweens.ascii_safe_redirects_tween_factory", over=MAIN
+        )
