@@ -21,7 +21,7 @@ class TestIncludeMe:
 
     @pytest.mark.parametrize(
         "ingress_required,egress_required",
-        [(True, True), (False, True), (True, False), (False, False),],
+        [(True, True), (False, True), (True, False), (False, False)],
     )
     def test_it_adds_the_tweens(
         self, ingress_required, egress_required, pyramid_config, settings
