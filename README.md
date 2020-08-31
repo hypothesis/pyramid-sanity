@@ -24,24 +24,12 @@ with Configurator() as config:
     config.include("pyramid_sanity")
 ```
 
-Settings
---------
-
 By default all fixes are enabled. You can disable them individually with settings:
 
 ```python
 config.add_settings({
     # Don't check for badly declared forms.
-    "pyramid_sanity.check_form": False,
-
-    # Don't check for badly encoded query params.
-    "pyramid_sanity.check_params": False,
-
-    # Don't check for badly encoded URL paths.
-    "pyramid_sanity.check_path": False,
-
-    # Don't safely encode redirect locations.
-    "pyramid_sanity.ascii_safe_redirects": False
+    "pyramid_sanity.check_form": False
 })
 ```
 
@@ -54,9 +42,21 @@ config.add_settings({
     "pyramid_sanity.disable_all": True,
 
     # Enable only the badly encoded query params fix.
-    "pyramid_sanity.check_params": True,
+    "pyramid_sanity.check_params": True
 })
 ```
+
+Options
+-------
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `pyramid_sanity.disable_all` | `False` | Disable all checks by default
+| `pyramid_sanity.check_form` | `True` | Check for badly declared forms
+| `pyramid_sanity.check_form.assume_form_on_blank` | `False` | Assume it's a form when the Content-Type is blank. This can cause errors when accepting non-form data
+| `pyramid_sanity.check_params` | `True` | Check for badly encoded query params
+| `pyramid_sanity.check_path` | `True` | Check for badly encoded URL paths
+| `pyramid_sanity.ascii_safe_redirects` | `True` | Safely encode redirect locations
 
 Exceptions
 ----------
