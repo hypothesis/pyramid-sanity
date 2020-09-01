@@ -31,23 +31,19 @@ class SharedTests:
 
 
 class TestInvalidFormTween(SharedTests):
-    def test_it_returns_InvalidFormData_for_invalid_form_post_requests(
-        self, tween, form_type
-    ):
-        self.assert_raises_for_content_type(tween, content_type=form_type)
+    GOOD_MULTIPART = "multipart/form-data; boundary=valid-boundary-------"
+    BAD_MULTIPART = "multipart/form-data; boundary="
 
-    @pytest.mark.usefixtures("assume_form_on")
-    def test_it_returns_InvalidFormData_for_invalid_blank_content_type_when_enabled(
-        self, tween
-    ):
-        self.assert_raises_for_content_type(tween, content_type="")
+    def test_it_returns_InvalidFormData_for_invalid_form_post_requests(self, tween):
+        req = Request.blank("/", method="POST", content_type=self.BAD_MULTIPART)
 
-    def test_it_does_not_consume_the_post_body_iterator(self, tween, form_type):
+        result = tween(req)
+
+        assert isinstance(result, InvalidFormData)
+
+    def test_it_does_not_consume_the_post_body_iterator(self, tween):
         req = Request.blank(
-            "/",
-            method="POST",
-            content_type=f"{form_type}; boundary=valid-boundary-------",
-            POST="content",
+            "/", method="POST", content_type=self.GOOD_MULTIPART, POST="content"
         )
 
         tween(req)
@@ -61,39 +57,21 @@ class TestInvalidFormTween(SharedTests):
         (
             ("method", "GET"),
             ("content_type", "other"),
-            # By default a blank content type is not assumed to be a form
+            # Some things considered forms by webob, but not multipart
             ("content_type", ""),
+            ("content_type", "application/x-www-form-urlencoded"),
         ),
     )
     def test_it_does_nothing_for_other_requests(self, handler, tween, option, value):
-        options = dict(
-            method="POST", content_type="multipart/form-data; boundary=239487389475"
-        )
-        options[option] = value
+        defaults = dict(method="POST", content_type=self.GOOD_MULTIPART)
+        defaults[option] = value
 
-        req = Request.blank("/any", **options)
+        req = Request.blank("/any", **defaults)
 
         response = tween(req)
 
         handler.assert_called_once_with(req)
         assert response == handler.return_value
-
-    def assert_raises_for_content_type(self, tween, content_type):
-        req = Request.blank("/", method="POST", content_type=content_type)
-
-        result = tween(req)
-
-        assert isinstance(result, InvalidFormData)
-
-    @pytest.fixture(
-        params=["multipart/form-data", "application/x-www-form-urlencoded"],
-    )
-    def form_type(self, request):
-        return request.param
-
-    @pytest.fixture
-    def assume_form_on(self, registry):
-        registry.settings["pyramid_sanity.check_form.assume_form_on_blank"] = True
 
     @pytest.fixture
     def tween(self, handler, registry):

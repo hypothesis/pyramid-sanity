@@ -53,7 +53,6 @@ Options
 |--------|---------|--------|
 | `pyramid_sanity.disable_all` | `False` | Disable all checks by default
 | `pyramid_sanity.check_form` | `True` | Check for badly declared forms
-| `pyramid_sanity.check_form.assume_form_on_blank` | `False` | Assume it's a form when the Content-Type is blank. This can cause errors when accepting non-form data
 | `pyramid_sanity.check_params` | `True` | Check for badly encoded query params
 | `pyramid_sanity.check_path` | `True` | Check for badly encoded URL paths
 | `pyramid_sanity.ascii_safe_redirects` | `True` | Safely encode redirect locations
