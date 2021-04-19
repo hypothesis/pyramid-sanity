@@ -4,8 +4,7 @@ from pytest import param
 
 
 class TestFailureConditions:
-    """
-    Test expected failure conditions in underlying frameworks still exist.
+    """Test expected failure conditions in underlying frameworks still exist.
 
     We rely on frameworks to raise certain errors for us to prevent them. We
     should test to see the errors conform to our understanding and still exist.
