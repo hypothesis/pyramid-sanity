@@ -15,6 +15,7 @@ disable=bad-continuation,
         missing-docstring,
         missing-type-doc,
         missing-return-type-doc,
+        wrong-import-order,
 
 [REPORTS]
 output-format=colorized
