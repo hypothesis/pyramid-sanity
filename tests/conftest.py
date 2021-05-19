@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 
 
-def _autopatcher(request, target, **kwargs):
+def _autopatcher(request, target, **kwargs):  # pragma: no cover
     """Patch and cleanup automatically. Wraps :py:func:`mock.patch`."""
     options = {"autospec": True}
     options.update(kwargs)
@@ -15,5 +15,5 @@ def _autopatcher(request, target, **kwargs):
 
 
 @pytest.fixture
-def patch(request):
+def patch(request):  # pragma: no cover
     return functools.partial(_autopatcher, request)
