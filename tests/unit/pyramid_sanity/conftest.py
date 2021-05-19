@@ -34,17 +34,3 @@ def pyramid_config(pyramid_request):
 @pytest.fixture
 def registry(pyramid_config):
     return pyramid_config.registry
-
-
-@pytest.fixture
-def patch(request):  # pragma:nocover
-    def autopatcher(target):
-        """Patch and cleanup automatically. Wraps :py:func:`mock.patch`."""
-
-        patcher = mock.patch(target, autospec=True)
-        patched_object = patcher.start()
-        request.addfinalizer(patcher.stop)
-
-        return patched_object
-
-    return autopatcher
