@@ -11,5 +11,5 @@
             "src/pyramid_sanity/__init__.py"
         ]
     },
-    "_template": "git@github.com:hypothesis/h-cookiecutter-pypackage.git"
+    "_template": "gh:hypothesis/h-cookiecutter-pypackage"
 }
