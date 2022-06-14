@@ -12,5 +12,6 @@
             "tests/conftest.py"
         ]
     },
-    "_template": "gh:hypothesis/h-cookiecutter-pypackage"
+    "_template": "gh:hypothesis/h-cookiecutter-pypackage",
+    "_output_dir": "/tmp/tmpeezkxqxj"
 }
