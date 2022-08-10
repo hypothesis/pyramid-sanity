@@ -1,0 +1,21 @@
+{
+  "template": "https://github.com/hypothesis/cookiecutters",
+  "checkout": null,
+  "directory": "pypackage",
+  "ignore": ["src/pyramid_sanity/core.py", "tests/unit/pyramid_sanity/core_test.py", "tests/functional/sanity_test.py"],
+  "extra_context": {
+    "name": "pyramid-sanity",
+    "package_name": "pyramid_sanity",
+    "slug": "pyramid-sanity",
+    "short_description": "Sensible defaults to catch bad behavior.",
+    "python_versions": "3.9.4, 3.8.9",
+    "github_owner": "hypothesis",
+    "copyright_holder": "Hypothesis",
+    "visibility": "public",
+    "console_script": "no",
+    "dependabot_pip_interval": "monthly",
+    "__entry_point": "pyramid-sanity",
+    "__github_url": "https://github.com/hypothesis/pyramid-sanity",
+    "__pypi_url": "https://pypi.org/project/pyramid-sanity"
+  }
+}
