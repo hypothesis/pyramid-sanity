@@ -2,7 +2,6 @@
 
 # All tweens return the request object, so we don't want to have to document
 # that in every docstring in this file.
-# pylint:disable=missing-return-doc
 
 import cgi
 import urllib.parse
