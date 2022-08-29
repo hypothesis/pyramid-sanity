@@ -135,4 +135,4 @@ score = "no"
 
 [tool.hdev]
 project_name = "pyramid-sanity"
-project_type = "package"
+project_type = "library"
