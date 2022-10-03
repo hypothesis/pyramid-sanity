@@ -8,7 +8,7 @@
     "package_name": "pyramid_sanity",
     "slug": "pyramid-sanity",
     "short_description": "Sensible defaults to catch bad behavior.",
-    "python_versions": "3.9.4, 3.8.9",
+    "python_versions": "3.9.13, 3.8.13",
     "github_owner": "hypothesis",
     "copyright_holder": "Hypothesis",
     "visibility": "public",
