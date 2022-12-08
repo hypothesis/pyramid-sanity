@@ -1,4 +1,3 @@
-
 `pyramid-sanity` is a Pyramid extension that catches certain crashes caused by
 badly formed requests, turning them into `400: Bad Request` responses instead.
 
