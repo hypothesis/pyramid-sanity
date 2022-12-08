@@ -266,7 +266,7 @@ Then to set up your development environment:
 
 ```terminal
 git clone https://github.com/hypothesis/pyramid-sanity.git
-cd pyramid_sanity
+cd pyramid-sanity
 make help
 ```
 
