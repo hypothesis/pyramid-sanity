@@ -21,6 +21,7 @@
     "__entry_point": "pyramid-sanity",
     "__github_url": "https://github.com/hypothesis/pyramid-sanity",
     "__pypi_url": "https://pypi.org/project/pyramid-sanity",
-    "__copyright_year": "2022"
+    "__copyright_year": "2022",
+    "pypi": "yes"
   }
 }
