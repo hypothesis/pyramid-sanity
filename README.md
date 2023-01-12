@@ -1,4 +1,4 @@
-<a href="https://github.com/hypothesis/pyramid-sanity/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/workflow/status/hypothesis/pyramid-sanity/CI/main"></a>
+<a href="https://github.com/hypothesis/pyramid-sanity/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/hypothesis/pyramid-sanity/ci.yml?branch=main"></a>
 <a href="https://pypi.org/project/pyramid-sanity"><img src="https://img.shields.io/pypi/v/pyramid-sanity"></a>
 <a><img src="https://img.shields.io/badge/python-3.9 | 3.8-success"></a>
 <a href="https://github.com/hypothesis/pyramid-sanity/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-BSD--2--Clause-success"></a>
