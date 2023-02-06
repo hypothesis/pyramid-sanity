@@ -63,7 +63,7 @@ class TestInvalidFormTween(SharedTests):
         ),
     )
     def test_it_does_nothing_for_other_requests(self, handler, tween, option, value):
-        defaults = dict(method="POST", content_type=self.GOOD_MULTIPART)
+        defaults = {"method": "POST", "content_type": self.GOOD_MULTIPART}
         defaults[option] = value
 
         req = Request.blank("/any", **defaults)
