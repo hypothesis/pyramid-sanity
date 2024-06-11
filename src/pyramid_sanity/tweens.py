@@ -3,7 +3,7 @@
 # All tweens return the request object, so we don't want to have to document
 # that in every docstring in this file.
 
-import cgi
+import cgi  # pylint:disable=deprecated-module
 import urllib.parse
 from functools import wraps
 

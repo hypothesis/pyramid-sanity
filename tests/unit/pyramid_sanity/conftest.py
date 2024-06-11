@@ -27,7 +27,7 @@ def pyramid_request():
 @pytest.fixture
 def pyramid_config(pyramid_request):
     with testing.testConfig(request=pyramid_request, settings={}) as config:
-        with mock.patch.object(config, "add_tween", auto_spec=True):
+        with mock.patch.object(config, "add_tween", autospec=True):
             yield config
 
 
