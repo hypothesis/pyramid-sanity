@@ -2,6 +2,26 @@
 requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[project]
+dynamic = ["version"]
+name = "pyramid-sanity"
+description = "Sensible defaults to catch bad behavior."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Developers",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pyramid",
+]
+
+[project.urls]
+Repository = "https://github.com/hypothesis/pyramid-sanity"
+Issues = "https://github.com/hypothesis/pyramid-sanity/issues"
+Changelog = "https://github.com/hypothesis/pyramid-sanity/releases"
+
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
