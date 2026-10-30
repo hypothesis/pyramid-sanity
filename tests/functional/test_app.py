@@ -32,7 +32,7 @@ class TestIntegration:
 
         assert (
             response.location
-            == "http://localhost/http%3A/example.com/%E2%82%AC/%E2%98%83"
+            == "http://localhost/http%3A//example.com/%E2%82%AC/%E2%98%83"
         )
 
     def test_broken_query_param_encoding(self, app):
